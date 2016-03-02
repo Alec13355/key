@@ -9,29 +9,48 @@
 // you will need arduino 1.0.1 or higher to run this sketch
 
 #include <SoftwareSerial.h>// import the serial library
+#include <Servo.h>
 
 SoftwareSerial Genotronex(10, 11); // RX, TX
 int ledpin=13; // led on D13 will show blink on / off
 int BluetoothData; // the data given from Computer
+int Lock=0;
+Servo myservo;
+int pos = 0;
 
 void setup() {
   // put your setup code here, to run once:
   Genotronex.begin(9600);
-  Genotronex.println("Bluetooth On please press 1 or 0 blink LED ..");
+  Genotronex.println("Bluetooth On please press 1 or 0 blink LED and actuator servo..");
   pinMode(ledpin,OUTPUT);
+  myservo.attach(7);          //enter correct pin num for servo.
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
    if (Genotronex.available()){
-BluetoothData=Genotronex.read();
-   if(BluetoothData=='1'){   // if number 1 pressed ....
-   digitalWrite(ledpin,1);
-   Genotronex.println("LED  On D13 ON ! ");
+      BluetoothData=Genotronex.read();
+      if(BluetoothData=='0'){
+        Lock=0;
+      }
+      if(BluetoothData=='1'){
+        Lock=1;
+      }
+   if(Lock==1){   // if number 1 pressed ....
+      digitalWrite(ledpin,1);
+      for(pos = 0; pos <= 160; pos += 1){ // goes from 0 degrees to 180 degrees
+        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+        delay(15);                       // waits 15ms for the servo to reach the position 
+      } 
+      Genotronex.println("The Door is Locked!");
    }
-  if (BluetoothData=='0'){// if number 0 pressed ....
-  digitalWrite(ledpin,0);
-   Genotronex.println("LED  On D13 Off ! ");
+  if (Lock==0){// if number 0 pressed ....
+      digitalWrite(ledpin,0);
+      for(pos = 180; pos>=0; pos-=1){     // goes from 180 degrees to 0 degrees                               
+        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+        delay(15);                       // waits 15ms for the servo to reach the position 
+      } 
+      Genotronex.println("The Door is Unlocked!");
   }
 }
 delay(100);// prepare for next data ...
